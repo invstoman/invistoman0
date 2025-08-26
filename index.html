@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الاستثمار - محافظة ظفار</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDummyKeyForDemo&callback=initMap&libraries=places&language=ar" async defer></script>
+    <style>
+        /* General Reset & Body */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            line-height: 1.8;
+            color: #1f2937;
+            overflow-x: hidden; /* Prevents horizontal scroll */
+        }
+
+        /* Utility Classes */
+        .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 100%); }
+
+        /* Map Specific Styles */
+        .map-container {
+            height: 600px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Card Hover Effect */
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Navigation Link Underline Effect */
+        .nav-link { position: relative; transition: color 0.3s ease; }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -5px;
+            right: 0; /* For RTL */
+            background-color: #0ea5e9;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        /* Primary Button Styling */
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Badges for Sector and Status */
+        .sector-badge, .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Modal Styling */
+        .modal {
+            transition: all 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+            position: fixed; /* Ensure it's fixed for overlay */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); /* Dark overlay */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 28rem; /* max-w-md */
+            width: 100%;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-blue-900">
+                            <i class="fas fa-landmark ml-2"></i>
+                            بوابة الاستثمار - ظفار
+                        </h1>
+                    </div>
+                    <div class="hidden md:ml-6 md:flex space-x-8">
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">الرئيسية</a>
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">المشاريع</a>
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">من نحن</a>
+                        <a href="#" class="nav-link text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">اتصل بنا</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="hidden md:block">
+                        <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                            <option>جميع القطاعات</option>
+                            <option>السياحة</option>
+                            <option>العقارات</option>
+                            <option>الصناعة</option>
+                            <option>الزراعة</option>
+                        </select>
+                    </div>
+                    <button onclick="toggleAuthModal()" class="btn-primary text-white px-6 py-2 rounded-lg font-medium">
+                        <i class="fas fa-user ml-2"></i>تسجيل الدخول
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="gradient-bg text-white pt-24 pb-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h1 class="text-4xl md:text-5xl font-bold mb-6">استثمر في مستقبل ظفار</h1>
+                <p class="text-xl mb-8 max-w-3xl mx-auto">
+                    اكتشف فرص الاستثمار في محافظة ظفار عبر منصتنا التفاعلية التي توفر بيانات المشاريع في الوقت الفعلي وأدوات التصور المتقدمة.
+                </p>
+                <div class="flex justify-center space-x-4">
+                    <button class="bg-white text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors">استكشاف المشاريع</button>
+                    <button class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-900 transition-colors">سجل الآن</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Map -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">خريطة فرص الاستثمار</h2>
+                <div class="flex space-x-4">
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-map ml-2"></i>عرض الخريطة</button>
+                    <button class="border border-gray-300 px-4 py-2 rounded-lg"><i class="fas fa-list ml-2"></i>عرض القائمة</button>
+                </div>
+            </div>
+            <div class="map-container bg-gray-200 relative">
+                <div id="map" style="height: 100%; width: 100%;"></div>
+                <div class="absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg">
+                    <h3 class="font-semibold mb-2">مفتاح الخريطة</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center"><div class="w-4 h-4 bg-green-500 rounded-full ml-2"></div><span class="text-sm">متاح</span></div>
+                        <div class="flex items-center"><div class="w-4 h-4 bg-yellow-500 rounded-full ml-2"></div><span class="text-sm">قيد التنفيذ</span></div>
+                        <div class="flex items-center"><div class="w-4 h-4 bg-blue-500 rounded-full ml-2"></div><span class="text-sm">مكتمل</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Featured Projects -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">أبرز فرص الاستثمار</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Project Card 1 -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                    <div class="h-48 bg-gray-200 relative">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2f008ef3-7ae7-4241-9451-802a05dbe534.png" alt="مشروع منتجع ساحلي في صلالة مع هندسة معمارية حديثة وإطلالات على البحر" class="w-full h-full object-cover">
+                        <div class="absolute top-4 right-4"><span class="sector-badge bg-blue-100 text-blue-800">السياحة</span></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">منتجع صلالة الساحلي</h3>
+                        <div class="flex items-center mb-3"><span class="status-badge bg-green-100 text-green-800">متاح</span><span class="text-sm text-gray-600 mr-3"><i class="fas fa-map-marker-alt ml-1"></i>صلالة</span></div>
+                        <p class="text-gray-600 mb-4">منتجع فاخر على الشاطئ يتضمن 150 غرفة، مرافق spa، ومركز مؤتمرات.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-blue-900">15.2 مليون $</span>
+                            <button onclick="showProjectDetails(1)" class="btn-primary text-white px-4 py-2 rounded-lg text-sm">عرض التفاصيل</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Card 2 -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                    <div class="h-48 bg-gray-200 relative">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/aa534a06-0244-4a1e-884c-e9d6bc366e4b.png" alt="منشأة صناعية حديثة مع بنية تحتية متطورة ومركز لوجستي في ريسوت" class="w-full h-full object-cover">
+                        <div class="absolute top-4 right-4"><span class="sector-badge bg-orange-100 text-orange-800">الصناعة</span></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">المدينة الصناعية بريسوت</h3>
+                        <div class="flex items-center mb-3"><span class="status-badge bg-yellow-100 text-yellow-800">قيد التنفيذ</span><span class="text-sm text-gray-600 mr-3"><i class="fas fa-map-marker-alt ml-1"></i>ريسوت</span></div>
+                        <p class="text-gray-600 mb-4">مدينة صناعية متطورة لمصانع التصنيع، المستودعات، والبنية التحتية اللوجستية.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-blue-900">8.7 مليون $</span>
+                            <button onclick="showProjectDetails(2)" class="btn-primary text-white px-4 py-2 rounded-lg text-sm">عرض التفاصيل</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project Card 3 -->
+                <div class="bg-white rounded-lg shadow-md overflow-hidden card-hover">
+                    <div class="h-48 bg-gray-200 relative">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/bd7ee401-93b4-45be-b887-388f6b8793a6.png" alt="تطوير عقاري متعدد الاستخدامات سكني وتجاري في مركز مدينة طاقة" class="w-full h-full object-cover">
+                        <div class="absolute top-4 right-4"><span class="sector-badge bg-purple-100 text-purple-800">العقارات</span></div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-semibold mb-2">مركز طاقة المدينة</h3>
+                        <div class="flex items-center mb-3"><span class="status-badge bg-blue-100 text-blue-800">مكتمل</span><span class="text-sm text-gray-600 mr-3"><i class="fas fa-map-marker-alt ml-1"></i>طاقة</span></div>
+                        <p class="text-gray-600 mb-4">تطوير متعدد الاستخدامات يشمل شقق سكنية، مساحات تجارية، ومكاتب إدارية.</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-2xl font-bold text-blue-900">12.5 مليون $</span>
+                            <button onclick="showProjectDetails(3)" class="btn-primary text-white px-4 py-2 rounded-lg text-sm">عرض التفاصيل</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="bg-white rounded-lg shadow-md p-8 mb-12">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-blue-900 mb-2">47</div>
+                    <div class="text-gray-600">مشروع نشط</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-green-600 mb-2">128 مليون $</div>
+                    <div class="text-gray-600">إجمالي الاستثمار</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-orange-600 mb-2">23</div>
+                    <div class="text-gray-600">مستثمر مسجل</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-purple-600 mb-2">8</div>
+                    <div class="text-gray-600">جهة حكومية</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">تسجيل الدخول</h2>
+                <button onclick="toggleAuthModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form onsubmit="return login(event)">
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">اسم المستخدم</label>
+                    <input type="text" id="username" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="ادخل اسم المستخدم" required>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-700 mb-2">كلمة المرور</label>
+                    <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" placeholder="ادخل كلمة المرور" required>
+                </div>
+                <button type="submit" class="btn-primary text-white w-full py-3 rounded-lg font-semibold mb-4">
+                    تسجيل الدخول
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Static users for authentication
+        const users = {
+            investor1: 'zx1234',
+            investor2: 'zx1234',
+            admin: 'zx1234'
+        };
+
+        // Login function: Handles user authentication and redirection
+        function login(event) {
+            event.preventDefault(); // Prevent default form submission
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (users[username] && users[username] === password) {
+                alert('تسجيل الدخول ناجح'); // Success message
+                // Redirect to the investment platform page
+                window.location.href = 'investment_platform.html';
+            } else {
+                alert('اسم المستخدم أو كلمة المرور غير صحيحة'); // Error message
+            }
+        }
+
+        // Function to toggle the visibility of the authentication modal
+        function toggleAuthModal() {
+            document.getElementById('authModal').classList.toggle('active');
+        }
+
+        // Google Maps Initialization
+        function initMap() {
+            const dhofarCenter = { lat: 17.0, lng: 54.0 }; // Center of Dhofar region
+            const map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 9, // Default zoom level
+                center: dhofarCenter,
+                styles: [ // Custom map styles for a cleaner look
+                    {
+                        featureType: 'administrative',
+                        elementType: 'labels.text.fill',
+                        stylers: [{color: '#444444'}]
+                    },
+                    {
+                        featureType: 'landscape',
+                        stylers: [{color: '#f2f2f2'}]
+                    },
+                    {
+                        featureType: 'poi',
+                        stylers: [{visibility: 'off'}] // Hide points of interest
+                    },
+                    {
+                        featureType: 'road',
+                        stylers: [{visibility: 'simplified', color: '#e0e0e0'}]
+                    },
+                    {
+                        featureType: 'transit',
+                        stylers: [{visibility: 'off'}] // Hide transit lines
+                    },
+                    {
+                        featureType: 'water',
+                        elementType: 'geometry',
+                        stylers: [{color: '#a2daf2'}]
+                    },
+                    {
+                        featureType: 'water',
+                        elementType: 'labels.text.fill',
+                        stylers: [{color: '#000000'}]
+                    }
+                ]
+            });
+
+            // Define project data for map markers
+            const projects = [
+                { name: 'منتجع صلالة الساحلي', lat: 17.01, lng: 54.09, status: 'متاح', statusColor: 'green' },
+                { name: 'المدينة الصناعية بريسوت', lat: 16.95, lng: 53.85, status: 'قيد التنفيذ', statusColor: 'yellow' },
+                { name: 'مركز طاقة المدينة', lat: 17.03, lng: 54.40, status: 'مكتمل', statusColor: 'blue' },
+                // Add more projects here as needed
+            ];
+
+            // Add markers to the map for each project
+            projects.forEach(project => {
+                // Determine marker color based on project status
+                const markerColor = project.statusColor === 'green' ? '#10B981' : // Tailwind green-500
+                                    project.statusColor === 'yellow' ? '#F59E0B' : // Tailwind yellow-500
+                                    project.statusColor === 'blue' ? '#3B82F6' : '#6B7280'; // Default to gray if no match
+
+                const marker = new google.maps.Marker({
+                    position: { lat: project.lat, lng: project.lng },
+                    map: map,
+                    title: project.name,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE, // Use a circle for the marker icon
+                        fillColor: markerColor,
+                        fillOpacity: 0.9,
+                        strokeWeight: 0, // No border
+                        scale: 10, // Size of the circle
+                    }
+                });
+
+                // Create an info window for each marker
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `
+                        <div dir="rtl" style="text-align: right;">
+                            <h4 style="font-weight: bold; margin-bottom: 5px;">${project.name}</h4>
+                            <p>الحالة: <span style="color: ${markerColor}; font-weight: bold;">${project.status}</span></p>
+                        </div>
+                    `
+                });
+
+                // Add click listener to open info window
+                marker.addListener('click', () => {
+                    infoWindow.open(map, marker);
+                });
+            });
+        }
+
+        // Placeholder function for showing project details (e.g., when clicking "عرض التفاصيل" on a card)
+        function showProjectDetails(projectId) {
+            alert('عرض تفاصيل المشروع ' + projectId);
+            // In a real application, this would typically open a detailed modal or navigate to a dedicated project page.
+        }
+    </script>
+
+</body>
+</html>
